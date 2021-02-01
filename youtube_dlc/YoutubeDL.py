@@ -737,6 +737,11 @@ class YoutubeDL(object):
         try:
             template_dict = dict(info_dict)
 
+            template_dict['duration_string'] = (  # %(duration>%H-%M-%S)s is wrong if duration > 24hrs
+                formatSeconds(info_dict['duration'], '-')
+                if info_dict.get('duration', None) is not None
+                else None)
+
             template_dict['epoch'] = int(time.time())
             autonumber_size = self.params.get('autonumber_size')
             if autonumber_size is None:
@@ -799,9 +804,9 @@ class YoutubeDL(object):
                 if key in template_dict:
                     continue
                 value = strftime_or_none(template_dict.get(field), frmt, na)
-                if conv_type in 'crs':
+                if conv_type in 'crs':  # string
                     value = sanitize(field, value)
-                else:
+                else:  # number
                     numeric_fields.append(key)
                     value = float_or_none(value, default=None)
                 if value is not None:
@@ -1017,10 +1022,6 @@ class YoutubeDL(object):
         self.add_extra_info(ie_result, {
             'extractor': ie.IE_NAME,
             'webpage_url': url,
-            'duration_string': (
-                formatSeconds(ie_result['duration'], '-')
-                if ie_result.get('duration', None) is not None
-                else None),
             'webpage_url_basename': url_basename(url),
             'extractor_key': ie.ie_key(),
         })
