@@ -3673,6 +3673,18 @@ def url_or_none(url):
     return url if re.match(r'^(?:(?:https?|rt(?:m(?:pt?[es]?|fp)|sp[su]?)|mms|ftps?):)?//', url) else None
 
 
+def strftime_or_none(timestamp, date_format, default=None):
+    datetime_object = None
+    try:
+        if isinstance(timestamp, int):  # unix timestamp
+            datetime_object = datetime.datetime.utcfromtimestamp(timestamp)
+        elif isinstance(timestamp, compat_str):  # assume YYYYMMDD
+            datetime_object = datetime.datetime.strptime(timestamp, '%Y%m%d')
+        return datetime_object.strftime(date_format)
+    except (ValueError, TypeError):
+        return default
+
+
 def parse_duration(s):
     if not isinstance(s, compat_basestring):
         return None

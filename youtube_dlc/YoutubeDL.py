@@ -91,6 +91,7 @@ from .utils import (
     sanitized_Request,
     std_headers,
     str_or_none,
+    strftime_or_none,
     subtitles_filename,
     to_high_limit_path,
     UnavailableVideoError,
@@ -755,7 +756,8 @@ class YoutubeDL(object):
             template_dict = dict((k, v if isinstance(v, compat_numeric_types) else sanitize(k, v))
                                  for k, v in template_dict.items()
                                  if v is not None and not isinstance(v, (list, tuple, dict)))
-            template_dict = collections.defaultdict(lambda: self.params.get('outtmpl_na_placeholder', 'NA'), template_dict)
+            na = self.params.get('outtmpl_na_placeholder', 'NA')
+            template_dict = collections.defaultdict(lambda: na, template_dict)
 
             outtmpl = self.params.get('outtmpl', DEFAULT_OUTTMPL)
 
@@ -795,6 +797,15 @@ class YoutubeDL(object):
                     outtmpl = re.sub(
                         FORMAT_RE.format(numeric_field),
                         r'%({0})s'.format(numeric_field), outtmpl)
+
+            datetime_formatter = (
+                lambda mobj: sanitize('', strftime_or_none(
+                    template_dict.get(mobj.group('field')),
+                    mobj.group('format'),
+                    na)))
+
+            FORMAT_DATE_RE = r'%\((?P<field>\w+)>(?P<format>.+?)\)t'
+            outtmpl = re.sub(FORMAT_DATE_RE, datetime_formatter, outtmpl)
 
             # expand_path translates '%%' into '%' and '$$' into '$'
             # correspondingly that is not what we want since we need to keep
